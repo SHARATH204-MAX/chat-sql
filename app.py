@@ -13,8 +13,90 @@ from streamlit_mic_recorder import speech_to_text
 
 load_dotenv()
 
-st.set_page_config(page_title="LangChain: Chat with SQL DB", page_icon="🦜")
-st.title("🦜 LangChain: Chat with SQL DB")
+st.set_page_config(page_title="SQL Intelligence - AI Data Assistant", page_icon="💠", layout="wide")
+
+# Custom CSS for Premium UI
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    
+    html, body, [data-testid="stAppViewContainer"] {
+        font-family: 'Inter', sans-serif;
+        background-color: #0e1117;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(0, 210, 255, 0.1) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(58, 123, 213, 0.1) 0px, transparent 50%);
+    }
+
+    [data-testid="stSidebar"] {
+        background: rgba(23, 28, 41, 0.7);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .main-header {
+        font-size: 3rem !important;
+        font-weight: 800 !important;
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0px !important;
+        padding-bottom: 0px !important;
+    }
+
+    .sub-header {
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-size: 1.1rem !important;
+        margin-top: -10px !important;
+        margin-bottom: 2rem !important;
+    }
+
+    /* Glassmorphic Chat Container */
+    .stChatMessage {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 15px !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Input area styling */
+    .stChatInput {
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 210, 255, 0.2) !important;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px !important;
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%) !important;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stButton>button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3) !important;
+    }
+
+    /* Sidebar text inputs */
+    [data-testid="stTextInput"] input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Hide default streamlit menu */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+
+st.markdown('<h1 class="main-header">SQL Intelligence</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Advanced AI-Powered Data Assistant</p>', unsafe_allow_html=True)
 
 LOCALDB="USE_LOCALDB"
 MYSQL="USE_MYSQL"
