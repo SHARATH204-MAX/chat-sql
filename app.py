@@ -9,6 +9,7 @@ import sqlite3
 from langchain_groq import ChatGroq
 import os
 from dotenv import load_dotenv
+from streamlit_mic_recorder import speech_to_text
 
 load_dotenv()
 
@@ -38,6 +39,17 @@ if not db_uri:
 
 if not api_key:
     st.info("Please add the groq api key")
+
+## Voice Input in Sidebar
+st.sidebar.markdown("---")
+st.sidebar.subheader("🎙️ Voice Input")
+voice_text = speech_to_text(
+    language='en', 
+    start_prompt="Start Recording", 
+    stop_prompt="Stop Recording", 
+    just_once=False, 
+    key='STT'
+)
 
 llm=ChatGroq(groq_api_key=api_key,model_name="llama-3.3-70b-versatile",streaming=True)
 
@@ -92,6 +104,10 @@ for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
 user_query=st.chat_input(placeholder="Ask anything from the database")
+
+# Prioritize voice input if available
+if voice_text:
+    user_query = voice_text
 
 if user_query:
     st.session_state.messages.append({"role": "user", "content": user_query})
