@@ -13,7 +13,7 @@ from streamlit_mic_recorder import speech_to_text
 
 load_dotenv()
 
-st.set_page_config(page_title="🦜LangChain: Chat with SQL DB", page_icon="🦜", layout="wide")
+st.set_page_config(page_title="🦜 LangChain: Chat with SQL DB", page_icon="🦜", layout="wide")
 
 # Custom CSS for Premium UI with High Visibility
 st.markdown("""
@@ -121,17 +121,12 @@ if not api_key:
     st.info("Please add the groq api key in the sidebar to begin.")
     st.stop()
 
-# Comprehensive Groq Model List
+# Optimized Model List for High Stability
 model_options = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
     "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
-    "gemma2-9b-it",
-    "llama3-70b-8192",
-    "llama3-8b-8192"
+    "mixtral-8x7b-32768"
 ]
-selected_model = st.sidebar.selectbox("Preferred Model", options=model_options)
+selected_model = st.sidebar.selectbox("Preferred Model (High Stability)", options=model_options)
 
 # Helper to create agent for a specific model
 def get_agent(model_name):
