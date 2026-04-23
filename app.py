@@ -129,7 +129,7 @@ def configure_db(db_uri,mysql_host=None,mysql_user=None,mysql_password=None,mysq
         if db_uri==LOCALDB:
             dbfilepath=(Path(__file__).parent/"student.db").absolute()
             creator = lambda: sqlite3.connect(f"file:{dbfilepath}?mode=ro", uri=True)
-            return SQLDatabase(create_engine("sqlite:///", creator=creator), include_tables=['STUDENT'])
+            return SQLDatabase(create_engine("sqlite:///", creator=creator), include_tables=['STUDENT', 'DEPARTMENTS'])
         elif db_uri==MYSQL:
             if not (mysql_host and mysql_user and mysql_password and mysql_db):
                 st.error("Please provide all MySQL connection details.")
