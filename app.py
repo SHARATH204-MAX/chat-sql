@@ -136,9 +136,13 @@ selected_model = st.sidebar.selectbox("Preferred Model", options=model_options)
 # Helper to create agent for a specific model
 def get_agent(model_name):
     llm_node=ChatGroq(groq_api_key=api_key,model_name=model_name,streaming=True, max_retries=2, timeout=60)
+    
+    # Create toolkit locally for the specific LLM
+    toolkit_node=SQLDatabaseToolkit(db=db,llm=llm_node)
+    
     return create_sql_agent(
         llm=llm_node,
-        toolkit=toolkit,
+        toolkit=toolkit_node,
         verbose=True,
         agent_type="zero-shot-react-description",
         handle_parsing_errors=True,
@@ -169,9 +173,7 @@ if db_uri==MYSQL:
 else:
     db=configure_db(db_uri)
 
-## toolkit
-toolkit=SQLDatabaseToolkit(db=db,llm=llm)
-
+# Moved prefix definition up so get_agent can use it
 prefix = """You are an agent designed to interact with a SQL database.
 Given an input question, create a syntactically correct sqlite query to run, then look at the results of the query and return the answer.
 If the query returns no results, your Final Answer should be "No records found matching your criteria."
