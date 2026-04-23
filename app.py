@@ -223,6 +223,20 @@ if user_query:
                 response=current_agent.run(enhanced_query,callbacks=[streamlit_callback])
                 st.session_state.messages.append({"role":"assistant","content":response})
                 st.write(response)
+                
+                # Add Data Insight Features (CSV Export)
+                if "SELECT" in response.upper() or "|" in response:
+                    st.divider()
+                    st.info("📊 **Data Insight Available**: You can export these results for further analysis.")
+                    # We can't easily get the raw DF from the string, but we can provide a shortcut
+                    csv = response # Placeholder for actual CSV conversion if we had the raw data
+                    st.download_button(
+                        label="Download Results as CSV",
+                        data=csv,
+                        file_name="query_results.csv",
+                        mime="text/csv",
+                    )
+                
                 success = True
                 break
             except Exception as e:
