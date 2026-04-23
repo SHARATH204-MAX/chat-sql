@@ -121,7 +121,11 @@ if not api_key:
     st.info("Please add the groq api key in the sidebar to begin.")
     st.stop()
 
-llm=ChatGroq(groq_api_key=api_key,model_name="llama-3.3-70b-versatile",streaming=True, max_retries=2, timeout=60)
+# Model Selection for Rate Limit Management
+model_options = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
+selected_model = st.sidebar.selectbox("Select Model (Switch if Rate Limited)", options=model_options)
+
+llm=ChatGroq(groq_api_key=api_key,model_name=selected_model,streaming=True, max_retries=2, timeout=60)
 
 @st.cache_resource(ttl="2h")
 def configure_db(db_uri,mysql_host=None,mysql_user=None,mysql_password=None,mysql_db=None):
@@ -198,9 +202,16 @@ if user_query:
         history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-6:-1]])
         enhanced_query = f"Previous Conversation:\n{history_context}\n\nCurrent Question: {user_query}"
         
-        response=agent.run(enhanced_query,callbacks=[streamlit_callback])
-        st.session_state.messages.append({"role":"assistant","content":response})
-        st.write(response)
+        try:
+            response=agent.run(enhanced_query,callbacks=[streamlit_callback])
+            st.session_state.messages.append({"role":"assistant","content":response})
+            st.write(response)
+        except Exception as e:
+            if "rate_limit_exceeded" in str(e).lower():
+                st.error("⚠️ Rate limit reached for the current model. Switching to a lighter model or waiting 10 minutes is recommended.")
+                st.info("Tip: Select 'llama-3.1-8b-instant' in the sidebar for higher limits.")
+            else:
+                st.error(f"An error occurred: {e}")
 
         
 
