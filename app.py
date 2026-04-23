@@ -121,11 +121,32 @@ if not api_key:
     st.info("Please add the groq api key in the sidebar to begin.")
     st.stop()
 
-# Model Selection for Rate Limit Management
-model_options = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
-selected_model = st.sidebar.selectbox("Select Model (Switch if Rate Limited)", options=model_options)
+# Comprehensive Groq Model List
+model_options = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it",
+    "llama3-70b-8192",
+    "llama3-8b-8192"
+]
+selected_model = st.sidebar.selectbox("Preferred Model", options=model_options)
 
-llm=ChatGroq(groq_api_key=api_key,model_name=selected_model,streaming=True, max_retries=2, timeout=60)
+# Helper to create agent for a specific model
+def get_agent(model_name):
+    llm_node=ChatGroq(groq_api_key=api_key,model_name=model_name,streaming=True, max_retries=2, timeout=60)
+    return create_sql_agent(
+        llm=llm_node,
+        toolkit=toolkit,
+        verbose=True,
+        agent_type="zero-shot-react-description",
+        handle_parsing_errors=True,
+        prefix=prefix,
+        max_iterations=10,
+        max_execution_time=60,
+        early_stopping_method="generate"
+    )
 
 @st.cache_resource(ttl="2h")
 def configure_db(db_uri,mysql_host=None,mysql_user=None,mysql_password=None,mysql_db=None):
@@ -168,17 +189,8 @@ Final Answer: <your final response>
 if "messages" not in st.session_state or st.sidebar.button("Clear message history"):
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
-agent=create_sql_agent(
-    llm=llm,
-    toolkit=toolkit,
-    verbose=True,
-    agent_type="zero-shot-react-description",
-    handle_parsing_errors=True,
-    prefix=prefix,
-    max_iterations=10,
-    max_execution_time=60,
-    early_stopping_method="generate"
-)
+# Initial agent based on selection
+agent = get_agent(selected_model)
 
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
@@ -202,16 +214,31 @@ if user_query:
         history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-6:-1]])
         enhanced_query = f"Previous Conversation:\n{history_context}\n\nCurrent Question: {user_query}"
         
-        try:
-            response=agent.run(enhanced_query,callbacks=[streamlit_callback])
-            st.session_state.messages.append({"role":"assistant","content":response})
-            st.write(response)
-        except Exception as e:
-            if "rate_limit_exceeded" in str(e).lower():
-                st.error("⚠️ Rate limit reached for the current model. Switching to a lighter model or waiting 10 minutes is recommended.")
-                st.info("Tip: Select 'llama-3.1-8b-instant' in the sidebar for higher limits.")
-            else:
-                st.error(f"An error occurred: {e}")
+        # Automatic Failover Loop
+        models_to_try = [selected_model] + [m for m in model_options if m != selected_model]
+        success = False
+        
+        for model_name in models_to_try:
+            try:
+                # Re-initialize agent if we are falling back
+                current_agent = agent if model_name == selected_model else get_agent(model_name)
+                
+                response=current_agent.run(enhanced_query,callbacks=[streamlit_callback])
+                st.session_state.messages.append({"role":"assistant","content":response})
+                st.write(response)
+                success = True
+                break
+            except Exception as e:
+                error_str = str(e).lower()
+                if "rate_limit_exceeded" in error_str or "429" in error_str:
+                    st.warning(f"⚠️ {model_name} is rate limited. Automatically trying {models_to_try[models_to_try.index(model_name)+1] if models_to_try.index(model_name)+1 < len(models_to_try) else 'none'}...")
+                    continue
+                else:
+                    st.error(f"An error occurred: {e}")
+                    break
+        
+        if not success:
+            st.error("❌ All available models are currently rate limited. Please try again in a few minutes.")
 
         
 
